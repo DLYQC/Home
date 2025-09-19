@@ -1,6 +1,5 @@
 name: 批量解压压缩包
-on: [push]  # 推送代码时自动触发
-
+on: [push, workflow_dispatch]  # 多个事件用中括号括起，逗号分隔
 jobs:
   batch-unzip:
     runs-on: ubuntu-latest
