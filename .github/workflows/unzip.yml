@@ -1,17 +1,43 @@
-name: Unzip Archive
-on: [push]  # 每次推送代码时触发解压
+name: 批量解压压缩包
+on: [push]  # 推送代码时自动触发
 
 jobs:
-  unzip:
+  batch-unzip:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4  # 检出仓库代码
+      - name: 检出仓库代码
+        uses: actions/checkout@v4
 
-      - name: Decompress files
-        uses: somaz94/compress-decompress@v1  # 使用第三方解压 Action
-        with:
-          command: decompress
-          source: your-archive.zip  # 替换为你的压缩包文件名（如 folder.zip）
-          format: zip  # 压缩格式（zip/tar/tgz）
-          dest: ./  # 解压到仓库根目录
+      - name: 批量解压所有压缩包
+        run: |
+          # 定义要处理的压缩格式（可同时支持多种，用空格分隔）
+          ARCHIVE_FORMATS=("*.zip" "*.tar.gz" "*.tar")
+          
+          # 循环处理每种格式的压缩包
+          for format in "${ARCHIVE_FORMATS[@]}"; do
+            # 查找所有对应格式的文件
+            archives=$(find . -type f -name "$format")
+            if [ -n "$archives" ]; then
+              echo "找到以下${format}格式的压缩包："
+              echo "$archives"
+              
+              # 逐个解压
+              while IFS= read -r archive; do
+                echo "开始解压：$archive"
+                dirname=$(basename "$archive" | sed 's/\.[^.]*$//')  # 提取文件名作为解压目录
+                mkdir -p "$dirname"  # 创建同名目录
+                
+                # 根据格式选择解压命令
+                if [[ "$archive" == *.zip ]]; then
+                  unzip "$archive" -d "$dirname"
+                elif [[ "$archive" == *.tar.gz || "$archive" == *.tar ]]; then
+                  tar -xf "$archive" -C "$dirname"
+                fi
+                
+                echo "解压完成：$archive → $dirname"
+                rm "$archive"  # 可选：解压后删除原压缩包
+              done <<< "$archives"
+            else
+              echo "未找到${format}格式的压缩包"
+            fi
+          done
