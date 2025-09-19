@@ -3,6 +3,8 @@ on: [push, workflow_dispatch]  # 多个事件用中括号括起，逗号分隔
 jobs:
   batch-unzip:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 允许写入仓库，关键权限！
     steps:
       - name: 检出仓库代码
         uses: actions/checkout@v4
